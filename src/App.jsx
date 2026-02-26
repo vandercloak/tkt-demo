@@ -6,58 +6,50 @@ const STYLES = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, #root { height: 100%; overflow: hidden; }
+html, body, #root { height: 100%; }
 
 :root {
-  --bg-deep: #07070a;
-  --bg-surface: #0c0c10;
-  --bg-elevated: #141419;
-  --bg-hover: #1b1b22;
-  --border: #1c1c26;
-  --border-light: #28283a;
-  --text-primary: #edece7;
-  --text-secondary: #807f88;
-  --text-muted: #4a4952;
+  --bg: #faf9f7;
+  --bg-card: #ffffff;
+  --bg-elevated: #f3f2ef;
+  --bg-hover: #eae9e4;
+  --border: #e5e3dd;
+  --border-light: #d5d3cc;
+  --text-primary: #1a1918;
+  --text-secondary: #6e6d68;
+  --text-muted: #a3a29c;
   --accent: #e8653a;
-  --accent-soft: rgba(232, 101, 58, 0.07);
-  --accent-glow: rgba(232, 101, 58, 0.15);
-  --success: #34d399;
-  --success-glow: rgba(52, 211, 153, 0.3);
-  --purple: #a78bfa;
-  --purple-soft: rgba(167, 139, 250, 0.07);
+  --accent-soft: rgba(232, 101, 58, 0.06);
+  --accent-glow: rgba(232, 101, 58, 0.12);
+  --purple: #7c5ce0;
+  --purple-soft: rgba(124, 92, 224, 0.06);
+  --success: #16a34a;
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
-  --r: 12px;
-  --r-sm: 8px;
+  --r: 14px;
+  --r-sm: 10px;
   --r-xs: 6px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.03);
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.03);
+  --shadow-lg: 0 2px 8px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.05);
 }
 
 body {
-  background: var(--bg-deep);
+  background: var(--bg);
   font-family: var(--font-body);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
-@keyframes dotBounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
 @keyframes glow { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
-@keyframes orbDrift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(15px, -20px) scale(1.08); }
-  66% { transform: translate(-10px, 10px) scale(0.95); }
-}
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
+@keyframes dotBounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
 `;
 
 // ─── Hooks ───────────────────────────────────────────────────────────────────
@@ -85,7 +77,7 @@ const builderConvo = [
   { role: "user", text: "\"Design Systems at Scale\", \"AI-Native Products\", and \"Founding Your Studio\"" },
   { role: "agent", text: "Added those as selectable options on Creator. Should VIP also get workshop access, or is the speaker dinner the main differentiator?" },
   { role: "user", text: "VIP gets everything Creator gets, plus the dinner and front row." },
-  { role: "agent", text: "Done — VIP inherits Creator perks. I've updated the preview. Here's where we're at:" },
+  { role: "agent", text: "Done — VIP inherits Creator perks. Your event page is ready." },
 ];
 
 const checkoutConvo = [
@@ -98,59 +90,174 @@ const checkoutConvo = [
   { role: "agent", text: "All set! Your total is $1,396. Any dietary restrictions? The VIP dinner needs that for you." },
 ];
 
-// ─── Splash ──────────────────────────────────────────────────────────────────
+// ─── Homepage ────────────────────────────────────────────────────────────────
 
-function Splash({ onDone }) {
-  const [fading, setFading] = useState(false);
-  const onDoneRef = useRef(onDone);
-  onDoneRef.current = onDone;
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setFading(true), 2000);
-    const t2 = setTimeout(() => onDoneRef.current(), 2700);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
-
+function Homepage({ onOpenDemo, mobile }) {
   return (
     <div style={{
-      position: "fixed", inset: 0, zIndex: 200,
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      background: "var(--bg-deep)",
-      opacity: fading ? 0 : 1,
-      transition: "opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1)",
+      width: "100vw", minHeight: "100vh",
+      background: "var(--bg)",
+      fontFamily: "var(--font-body)", color: "var(--text-primary)",
+      animation: "fadeIn 0.5s ease-out",
     }}>
-      {/* Ambient orbs */}
+      {/* Nav */}
       <div style={{
-        position: "absolute", width: 500, height: 500, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(232,101,58,0.1) 0%, transparent 65%)",
-        top: "35%", left: "40%", transform: "translate(-50%,-50%)",
-        filter: "blur(80px)", animation: "orbDrift 10s ease-in-out infinite",
-      }} />
-      <div style={{
-        position: "absolute", width: 400, height: 400, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(167,139,250,0.07) 0%, transparent 65%)",
-        top: "55%", left: "58%", transform: "translate(-50%,-50%)",
-        filter: "blur(80px)", animation: "orbDrift 10s ease-in-out 3s infinite",
-      }} />
-
-      <div style={{
-        fontFamily: "var(--font-display)", fontSize: 64, fontWeight: 400,
-        letterSpacing: "-0.03em",
-        background: "linear-gradient(135deg, var(--text-primary) 30%, var(--accent) 70%, var(--purple) 100%)",
-        WebkitBackgroundClip: "text", color: "transparent",
-        animation: "fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) both",
-        marginBottom: 20,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: mobile ? "0 20px" : "0 40px",
+        height: 56, borderBottom: "1px solid var(--border)",
+        background: "var(--bg-card)",
       }}>
-        tkt
+        <span style={{
+          fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500,
+          background: "linear-gradient(135deg, var(--accent), var(--purple))",
+          WebkitBackgroundClip: "text", color: "transparent",
+        }}>tkt</span>
+        {!mobile && <RequestButton />}
       </div>
+
+      {/* Content */}
       <div style={{
-        fontFamily: "var(--font-body)", fontSize: 17, fontWeight: 400,
-        color: "var(--text-secondary)", letterSpacing: "0.01em",
-        animation: "fadeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both",
+        maxWidth: 960, margin: "0 auto",
+        padding: mobile ? "56px 24px 48px" : "10vh 40px 8vh",
+        textAlign: "center",
       }}>
-        The last ticket agent you'll ever need.
+        {/* Ornament */}
+        <div style={{
+          fontFamily: "var(--font-display)", fontSize: 22,
+          background: "linear-gradient(135deg, var(--accent), var(--purple))",
+          WebkitBackgroundClip: "text", color: "transparent",
+          marginBottom: 20, opacity: 0.5,
+          animation: "fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both",
+        }}>✦</div>
+
+        {/* Hero */}
+        <h1 style={{
+          fontFamily: "var(--font-display)",
+          fontSize: mobile ? 38 : 58,
+          fontWeight: 400, letterSpacing: "-0.03em", lineHeight: 1.1,
+          marginBottom: 20,
+          animation: "fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both",
+        }}>
+          <span style={{ display: "block" }}>One conversation.</span>
+          <span style={{ display: "block" }}>Every ticket.</span>
+        </h1>
+
+        <p style={{
+          fontSize: mobile ? 16 : 18, color: "var(--text-secondary)",
+          lineHeight: 1.65, maxWidth: 520, margin: "0 auto",
+          fontWeight: 400,
+          animation: "fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both",
+        }}>
+          Organizers describe their event. Attendees chat to register.
+          <br />No forms, no dashboards — just conversation.
+        </p>
+
+        {/* Demo Cards */}
+        <div style={{
+          display: "flex", flexDirection: mobile ? "column" : "row",
+          gap: 16, marginTop: mobile ? 48 : 64,
+          justifyContent: "center", textAlign: "left",
+          animation: "fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both",
+        }}>
+          <DemoCard
+            tag="For organizers"
+            accent="var(--accent)"
+            messages={[
+              { role: "agent", text: "What are you creating?" },
+              { role: "user", text: "A 2-day creative conference called \"Kaleidoscope\" — downtown Detroit." },
+            ]}
+            description="tkt builds your event page as you describe it — tiers, workshops, checkout, and all."
+            cta="Watch it build"
+            onClick={() => onOpenDemo("builder")}
+          />
+          <DemoCard
+            tag="For attendees"
+            accent="var(--purple)"
+            messages={[
+              { role: "agent", text: "Coming solo or bringing a team?" },
+              { role: "user", text: "Team of 4 — VIP for myself, Creator for the other 3." },
+            ]}
+            description="Attendees register through conversation. No forms, no friction — just talk."
+            cta="Watch it work"
+            onClick={() => onOpenDemo("checkout")}
+          />
+        </div>
       </div>
     </div>
+  );
+}
+
+function DemoCard({ tag, accent, messages, description, cta, onClick }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        flex: 1, maxWidth: 460, cursor: "pointer",
+        background: "var(--bg-card)",
+        border: `1px solid ${hovered ? accent + "40" : "var(--border)"}`,
+        borderRadius: 16, padding: 28,
+        boxShadow: hovered ? "var(--shadow-lg)" : "var(--shadow)",
+        transform: hovered ? "translateY(-2px)" : "none",
+        transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+      }}
+    >
+      <div style={{
+        fontSize: 10, fontWeight: 600, color: accent,
+        letterSpacing: "0.08em", textTransform: "uppercase",
+        marginBottom: 16,
+      }}>{tag}</div>
+
+      {/* Mini chat */}
+      <div style={{
+        background: "var(--bg)", borderRadius: 10, padding: 14,
+        marginBottom: 20, display: "flex", flexDirection: "column", gap: 8,
+      }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: m.role === "agent" ? "flex-start" : "flex-end" }}>
+            {m.role === "agent" && (
+              <span style={{ fontSize: 9, fontWeight: 600, color: accent, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 3 }}>tkt</span>
+            )}
+            <div style={{
+              maxWidth: "88%", padding: "8px 12px",
+              borderRadius: m.role === "agent" ? "3px 12px 12px 12px" : "12px 12px 3px 12px",
+              background: m.role === "agent" ? "var(--bg-card)" : accent,
+              color: m.role === "agent" ? "var(--text-primary)" : "#fff",
+              fontSize: 13, lineHeight: 1.5,
+              border: m.role === "agent" ? "1px solid var(--border)" : "none",
+            }}>{m.text}</div>
+          </div>
+        ))}
+      </div>
+
+      <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 16 }}>
+        {description}
+      </p>
+
+      <span style={{ fontSize: 14, fontWeight: 600, color: accent }}>
+        {cta} →
+      </span>
+    </div>
+  );
+}
+
+function RequestButton() {
+  const [h, setH] = useState(false);
+  return (
+    <button
+      onMouseEnter={() => setH(true)}
+      onMouseLeave={() => setH(false)}
+      style={{
+        padding: "7px 16px", borderRadius: 8,
+        background: h ? "var(--accent)" : "transparent",
+        border: `1px solid ${h ? "var(--accent)" : "var(--border)"}`,
+        color: h ? "#fff" : "var(--text-secondary)",
+        fontSize: 13, fontWeight: 500, cursor: "pointer",
+        transition: "all 0.2s ease",
+      }}
+    >Request Access</button>
   );
 }
 
@@ -161,7 +268,7 @@ function TypingDots() {
     <div style={{ display: "flex", gap: 5, padding: "10px 0" }}>
       {[0, 1, 2].map(i => (
         <div key={i} style={{
-          width: 5, height: 5, borderRadius: "50%", background: "var(--text-muted)",
+          width: 5, height: 5, borderRadius: "50%", background: "var(--border-light)",
           animation: `dotBounce 1.4s ease-in-out ${i * 0.16}s infinite`,
         }} />
       ))}
@@ -189,9 +296,8 @@ function Bubble({ msg, isNew, accent }) {
         borderRadius: isAgent ? "3px 16px 16px 16px" : "16px 16px 3px 16px",
         background: isAgent ? "var(--bg-elevated)" : accent,
         color: isAgent ? "var(--text-primary)" : "#fff",
-        fontSize: 13.5, lineHeight: 1.6, fontWeight: 400,
+        fontSize: 13.5, lineHeight: 1.6,
         border: isAgent ? "1px solid var(--border)" : "none",
-        boxShadow: isAgent ? "none" : `0 2px 12px ${accent}33`,
       }}>{msg.text}</div>
     </div>
   );
@@ -218,7 +324,7 @@ function Chat({ convo, onProgress, title, sub, accent }) {
   return (
     <div style={{
       display: "flex", flexDirection: "column", height: "100%",
-      background: "var(--bg-surface)",
+      background: "var(--bg-card)",
     }}>
       {/* Header */}
       <div style={{
@@ -227,13 +333,13 @@ function Chat({ convo, onProgress, title, sub, accent }) {
       }}>
         <div style={{
           width: 34, height: 34, borderRadius: 10,
-          background: `linear-gradient(135deg, ${accent}22, ${accent}08)`,
-          border: `1px solid ${accent}30`,
+          background: accent === "var(--accent)" ? "var(--accent-soft)" : "var(--purple-soft)",
+          border: `1px solid ${accent}20`,
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 14, color: accent,
         }}>✦</div>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em" }}>{title}</div>
+          <div style={{ fontSize: 14, fontWeight: 600 }}>{title}</div>
           <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{sub}</div>
         </div>
       </div>
@@ -242,6 +348,7 @@ function Chat({ convo, onProgress, title, sub, accent }) {
       <div ref={ref} style={{
         flex: 1, overflowY: "auto", padding: "20px 18px",
         display: "flex", flexDirection: "column", gap: 16,
+        background: "var(--bg)",
       }}>
         {convo.slice(0, count).map((m, i) => (
           <Bubble key={i} msg={m} isNew={i === count - 1} accent={accent} />
@@ -275,7 +382,6 @@ function Chat({ convo, onProgress, title, sub, accent }) {
           background: accent, border: "none", color: "#fff",
           fontSize: 16, fontWeight: 600, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: `0 2px 12px ${accent}40`,
         }}>↑</button>
       </div>
     </div>
@@ -284,15 +390,14 @@ function Chat({ convo, onProgress, title, sub, accent }) {
 
 // ─── Browser Frame ───────────────────────────────────────────────────────────
 
-function BrowserFrame({ children, url, mobile }) {
-  if (mobile) return <>{children}</>;
+function BrowserFrame({ children, url }) {
   return (
     <div style={{
       flex: 1, display: "flex", flexDirection: "column",
       margin: 14, borderRadius: 14,
       border: "1px solid var(--border)",
-      overflow: "hidden", background: "var(--bg-surface)",
-      boxShadow: "0 0 0 1px rgba(0,0,0,0.3), 0 8px 40px rgba(0,0,0,0.4)",
+      overflow: "hidden", background: "var(--bg-card)",
+      boxShadow: "var(--shadow-lg)",
     }}>
       <div style={{
         display: "flex", alignItems: "center", gap: 10,
@@ -303,15 +408,14 @@ function BrowserFrame({ children, url, mobile }) {
           {[0, 1, 2].map(i => (
             <div key={i} style={{
               width: 9, height: 9, borderRadius: "50%",
-              background: "var(--border-light)", opacity: 0.8,
+              background: "var(--border-light)",
             }} />
           ))}
         </div>
         <div style={{
           flex: 1, padding: "5px 14px", borderRadius: 6,
-          background: "var(--bg-deep)", fontSize: 11.5,
-          color: "var(--text-muted)", fontFamily: "var(--font-body)",
-          letterSpacing: "0.01em",
+          background: "var(--bg-card)", border: "1px solid var(--border)",
+          fontSize: 11.5, color: "var(--text-muted)",
         }}>{url}</div>
       </div>
       <div style={{ flex: 1, overflow: "auto" }}>
@@ -334,19 +438,9 @@ function BuilderPreview({ progress, mobile }) {
   return (
     <div style={{
       flex: 1, overflowY: "auto", padding: `32px ${px}px 48px`,
-      background: "var(--bg-deep)",
-      position: "relative",
+      background: "var(--bg)",
     }}>
-      {/* Ambient glow */}
-      <div style={{
-        position: "absolute", top: -100, right: -100, width: 500, height: 500,
-        borderRadius: "50%", pointerEvents: "none",
-        background: "radial-gradient(circle, rgba(232,101,58,0.04) 0%, transparent 60%)",
-        filter: "blur(60px)",
-        animation: "orbDrift 12s ease-in-out infinite",
-      }} />
-
-      {/* Status bar */}
+      {/* Status */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         marginBottom: 32,
@@ -355,40 +449,32 @@ function BuilderPreview({ progress, mobile }) {
           <div style={{
             width: 7, height: 7, borderRadius: "50%",
             background: sf ? "var(--success)" : "var(--accent)",
-            boxShadow: sf
-              ? "0 0 12px var(--success-glow), 0 0 4px var(--success)"
-              : "0 0 8px var(--accent-glow)",
+            boxShadow: sf ? "0 0 8px rgba(22,163,74,0.4)" : "0 0 6px var(--accent-glow)",
             animation: sf ? "glow 2s ease-in-out infinite" : "pulse 2.5s ease-in-out infinite",
           }} />
           <span style={{
-            fontSize: 11, color: sf ? "var(--success)" : "var(--text-secondary)",
+            fontSize: 11, color: sf ? "var(--success)" : "var(--text-muted)",
             fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase",
-            transition: "color 0.5s ease",
           }}>{sf ? "Preview Ready" : "Building..."}</span>
         </div>
         <span style={{
-          fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.05em",
-          textTransform: "uppercase",
+          fontSize: 10, color: "var(--text-muted)",
+          letterSpacing: "0.05em", textTransform: "uppercase",
         }}>Live Preview</span>
       </div>
 
-      {/* Empty state */}
+      {/* Empty */}
       {!sb && (
         <div style={{
           display: "flex", flexDirection: "column", alignItems: "center",
           justifyContent: "center", height: "55%", textAlign: "center",
-          animation: "fadeIn 0.8s ease-out", padding: 24,
+          animation: "fadeIn 0.8s ease-out",
         }}>
           <div style={{
-            fontFamily: "var(--font-display)", fontSize: 48,
-            marginBottom: 20, opacity: 0.12,
-            background: "linear-gradient(135deg, var(--text-primary), var(--accent))",
-            WebkitBackgroundClip: "text", color: "transparent",
+            fontFamily: "var(--font-display)", fontSize: 40,
+            marginBottom: 16, opacity: 0.15, color: "var(--text-muted)",
           }}>✦</div>
-          <p style={{
-            color: "var(--text-muted)", fontSize: 15,
-            maxWidth: 260, lineHeight: 1.7, fontWeight: 400,
-          }}>
+          <p style={{ color: "var(--text-muted)", fontSize: 15, maxWidth: 260, lineHeight: 1.7 }}>
             Describe your event and watch it take shape.
           </p>
         </div>
@@ -410,51 +496,45 @@ function BuilderPreview({ progress, mobile }) {
             <h1 style={{
               fontFamily: "var(--font-display)",
               fontSize: mobile ? (sv ? 40 : 32) : (sv ? 72 : 52),
-              fontWeight: 300, letterSpacing: "-0.03em", lineHeight: 1.05,
-              marginBottom: 14,
-              background: sv
-                ? "linear-gradient(135deg, var(--text-primary) 30%, var(--accent) 100%)"
-                : "none",
-              color: sv ? "transparent" : "var(--text-primary)",
-              WebkitBackgroundClip: sv ? "text" : "unset",
+              fontWeight: sv ? 400 : 300,
+              letterSpacing: "-0.03em", lineHeight: 1.05, marginBottom: 14,
+              color: "var(--text-primary)",
               transition: "font-size 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
             }}>Kaleidoscope</h1>
 
             <p style={{
               fontSize: mobile ? 14 : 18, color: "var(--text-secondary)",
-              lineHeight: 1.65, maxWidth: 520, fontWeight: 400,
+              lineHeight: 1.65, maxWidth: 520,
             }}>
               {sv
                 ? "Two days of raw creative energy. Designers, developers, and founders colliding in a warehouse in downtown Detroit."
-                : "A 2-day creative conference for designers, developers, and founders."
-              }
+                : "A 2-day creative conference for designers, developers, and founders."}
             </p>
           </div>
 
-          {/* Vibe tags */}
+          {/* Tags */}
           {sv && (
             <div style={{
-              display: "flex", flexWrap: "wrap", gap: 8,
-              marginBottom: 44,
+              display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 44,
               animation: "fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both",
             }}>
               {["Indie Creative", "Warehouse Venue", "Interactive"].map((t, i) => (
                 <span key={i} style={{
                   padding: "6px 14px", borderRadius: 20,
-                  border: "1px solid var(--border-light)",
+                  border: "1px solid var(--border)",
                   fontSize: 12, color: "var(--text-secondary)", fontWeight: 500,
-                  background: "var(--bg-elevated)",
+                  background: "var(--bg-card)",
                 }}>{t}</span>
               ))}
             </div>
           )}
 
-          {/* Gradient divider */}
+          {/* Divider */}
           {sv && (
             <div style={{
               height: 1, marginBottom: 44,
-              background: "linear-gradient(90deg, var(--accent) 0%, var(--purple) 40%, transparent 80%)",
-              opacity: 0.15,
+              background: "linear-gradient(90deg, var(--accent), var(--purple), transparent)",
+              opacity: 0.12,
             }} />
           )}
 
@@ -476,47 +556,34 @@ function BuilderPreview({ progress, mobile }) {
                 gap: 12,
               }}>
                 {[
-                  {
-                    name: "General", price: "$149", color: "var(--text-muted)",
-                    perks: ["2-day conference access", "Community events", "Lunch included"],
-                  },
-                  {
-                    name: "Creator", price: "$299", color: "var(--accent)",
-                    perks: ["Everything in General", "Workshop access", "Creator lounge"],
-                    featured: true,
-                  },
-                  {
-                    name: "VIP", price: "$499", color: "var(--purple)",
-                    perks: ["Everything in Creator", "Speaker dinner", "Front row seating"],
-                  },
+                  { name: "General", price: "$149", color: "var(--text-muted)", perks: ["2-day conference access", "Community events", "Lunch included"] },
+                  { name: "Creator", price: "$299", color: "var(--accent)", perks: ["Everything in General", "Workshop access", "Creator lounge"], featured: true },
+                  { name: "VIP", price: "$499", color: "var(--purple)", perks: ["Everything in Creator", "Speaker dinner", "Front row seating"] },
                 ].map((tier, i) => (
                   <div key={i} style={{
                     padding: mobile ? 18 : 24, borderRadius: "var(--r)",
-                    background: tier.featured ? "var(--bg-elevated)" : "var(--bg-surface)",
-                    border: `1px solid ${tier.featured ? `${tier.color}40` : "var(--border)"}`,
+                    background: "var(--bg-card)",
+                    border: `1px solid ${tier.featured ? tier.color + "30" : "var(--border)"}`,
+                    boxShadow: tier.featured ? "var(--shadow)" : "var(--shadow-sm)",
                     position: "relative", overflow: "hidden",
                     animation: `fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.08}s both`,
-                    transition: "border-color 0.3s ease",
                   }}>
-                    {/* Top accent line */}
                     {tier.featured && (
                       <div style={{
-                        position: "absolute", top: 0, left: 0, right: 0, height: 1,
+                        position: "absolute", top: 0, left: 0, right: 0, height: 2,
                         background: `linear-gradient(90deg, transparent, ${tier.color}, transparent)`,
-                        opacity: 0.6,
+                        opacity: 0.5,
                       }} />
                     )}
 
                     <div style={{ marginBottom: mobile ? 12 : 20 }}>
                       <div style={{
                         fontSize: 12, fontWeight: 600, color: tier.color,
-                        letterSpacing: "0.04em", textTransform: "uppercase",
-                        marginBottom: 6,
+                        letterSpacing: "0.04em", textTransform: "uppercase", marginBottom: 6,
                       }}>{tier.name}</div>
                       <div style={{
                         fontFamily: "var(--font-display)",
-                        fontSize: mobile ? 28 : 36, fontWeight: 300,
-                        letterSpacing: "-0.02em",
+                        fontSize: mobile ? 28 : 36, fontWeight: 300, letterSpacing: "-0.02em",
                       }}>{tier.price}</div>
                     </div>
 
@@ -525,19 +592,16 @@ function BuilderPreview({ progress, mobile }) {
                         <div key={j} style={{
                           fontSize: 13, color: "var(--text-secondary)",
                           display: "flex", alignItems: "center", gap: 10,
-                          lineHeight: 1.4,
                         }}>
                           <span style={{
                             width: 4, height: 4, borderRadius: "50%",
-                            background: tier.color, flexShrink: 0,
-                            opacity: 0.7,
+                            background: tier.color, flexShrink: 0, opacity: 0.6,
                           }} />
                           {p}
                         </div>
                       ))}
                     </div>
 
-                    {/* Workshop selector */}
                     {sw && tier.name === "Creator" && (
                       <div style={{
                         marginTop: 16, paddingTop: 16,
@@ -546,8 +610,7 @@ function BuilderPreview({ progress, mobile }) {
                       }}>
                         <div style={{
                           fontSize: 10, fontWeight: 600, color: "var(--text-muted)",
-                          textTransform: "uppercase", letterSpacing: "0.06em",
-                          marginBottom: 10,
+                          textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10,
                         }}>Select Workshop</div>
                         {["Design Systems at Scale", "AI-Native Products", "Founding Your Studio"].map((w, k) => (
                           <label key={k} style={{
@@ -558,18 +621,10 @@ function BuilderPreview({ progress, mobile }) {
                           }}>
                             <div style={{
                               width: 16, height: 16, borderRadius: "50%", flexShrink: 0,
-                              border: k === 0
-                                ? "2px solid var(--accent)"
-                                : "1.5px solid var(--border-light)",
+                              border: k === 0 ? "2px solid var(--accent)" : "1.5px solid var(--border-light)",
                               display: "flex", alignItems: "center", justifyContent: "center",
-                              transition: "border-color 0.2s ease",
                             }}>
-                              {k === 0 && (
-                                <div style={{
-                                  width: 8, height: 8, borderRadius: "50%",
-                                  background: "var(--accent)",
-                                }} />
-                              )}
+                              {k === 0 && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)" }} />}
                             </div>
                             {w}
                           </label>
@@ -582,33 +637,24 @@ function BuilderPreview({ progress, mobile }) {
             </div>
           )}
 
-          {/* Publish CTA */}
+          {/* Publish */}
           {sf && (
             <div style={{
-              display: "flex",
-              flexDirection: mobile ? "column" : "row",
+              display: "flex", flexDirection: mobile ? "column" : "row",
               alignItems: mobile ? "stretch" : "center",
               justifyContent: "space-between", gap: 16,
-              padding: mobile ? 20 : 24,
-              borderRadius: "var(--r)",
-              background: "var(--accent-soft)",
-              border: "1px solid rgba(232, 101, 58, 0.12)",
+              padding: mobile ? 20 : 24, borderRadius: "var(--r)",
+              background: "var(--accent-soft)", border: "1px solid var(--accent-glow)",
               animation: "fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
             }}>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>
-                  Ready to go live?
-                </div>
-                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                  Your event page is looking great.
-                </div>
+                <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 3 }}>Ready to go live?</div>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Your event page is looking great.</div>
               </div>
               <button style={{
-                padding: "12px 28px", borderRadius: "var(--r-sm)",
-                flexShrink: 0, background: "var(--accent)", border: "none",
-                color: "#fff", fontSize: 14, fontWeight: 600,
-                cursor: "pointer", letterSpacing: "0.01em",
-                boxShadow: "0 2px 16px rgba(232, 101, 58, 0.3)",
+                padding: "12px 28px", borderRadius: "var(--r-sm)", flexShrink: 0,
+                background: "var(--accent)", border: "none", color: "#fff",
+                fontSize: 14, fontWeight: 600, cursor: "pointer",
               }}>Publish Event →</button>
             </div>
           )}
@@ -633,24 +679,14 @@ function CheckoutReceipt({ progress, mobile }) {
   return (
     <div style={{
       flex: 1, overflowY: "auto", padding: `32px ${px}px 48px`,
-      background: "var(--bg-deep)", display: "flex", flexDirection: "column",
-      position: "relative",
+      background: "var(--bg)", display: "flex", flexDirection: "column",
     }}>
-      {/* Ambient glow */}
-      <div style={{
-        position: "absolute", top: -80, right: -60, width: 400, height: 400,
-        borderRadius: "50%", pointerEvents: "none",
-        background: "radial-gradient(circle, rgba(167,139,250,0.04) 0%, transparent 60%)",
-        filter: "blur(60px)",
-      }} />
-
       <div style={{ marginBottom: 28 }}>
         <div style={{
           display: "inline-block", padding: "5px 12px", borderRadius: 5,
-          background: "var(--purple-soft)",
-          color: "var(--purple)", fontSize: 11, fontWeight: 600,
-          letterSpacing: "0.08em", textTransform: "uppercase",
-          marginBottom: 16,
+          background: "var(--purple-soft)", color: "var(--purple)",
+          fontSize: 11, fontWeight: 600,
+          letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16,
         }}>Registration</div>
         <h2 style={{
           fontFamily: "var(--font-display)",
@@ -661,15 +697,15 @@ function CheckoutReceipt({ progress, mobile }) {
       </div>
 
       <div style={{
-        background: "var(--bg-surface)", border: "1px solid var(--border)",
+        background: "var(--bg-card)", border: "1px solid var(--border)",
         borderRadius: "var(--r)", padding: mobile ? 20 : 28,
+        boxShadow: "var(--shadow)",
         flex: 1, display: "flex", flexDirection: "column",
       }}>
         <div style={{ marginBottom: 24 }}>
           <div style={{
             fontSize: 10, fontWeight: 600, color: "var(--text-muted)",
-            textTransform: "uppercase", letterSpacing: "0.06em",
-            marginBottom: 12,
+            textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12,
           }}>Attendees</div>
 
           {showTeam ? (
@@ -686,14 +722,14 @@ function CheckoutReceipt({ progress, mobile }) {
                 <div key={i} style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "10px 12px", borderRadius: "var(--r-xs)",
-                  background: "var(--bg-elevated)", border: "1px solid var(--border)",
+                  background: "var(--bg)", border: "1px solid var(--border)",
                   animation: `fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.06}s both`,
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                     <div style={{
                       width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-                      background: `linear-gradient(135deg, ${a.color}20, ${a.color}08)`,
-                      border: `1px solid ${a.color}30`,
+                      background: a.color === "var(--purple)" ? "var(--purple-soft)" : "var(--accent-soft)",
+                      border: `1px solid ${a.color}20`,
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: 12, fontWeight: 600, color: a.color,
                     }}>{a.name[0]}</div>
@@ -711,8 +747,7 @@ function CheckoutReceipt({ progress, mobile }) {
                   <span style={{
                     fontSize: 10, fontWeight: 600, color: a.color, flexShrink: 0,
                     padding: "3px 10px", borderRadius: 5,
-                    background: `${a.color}10`,
-                    letterSpacing: "0.03em",
+                    background: a.color === "var(--purple)" ? "var(--purple-soft)" : "var(--accent-soft)",
                   }}>{a.tier}</span>
                 </div>
               ))}
@@ -735,8 +770,7 @@ function CheckoutReceipt({ progress, mobile }) {
           }}>
             <div style={{
               fontSize: 10, fontWeight: 600, color: "var(--text-muted)",
-              textTransform: "uppercase", letterSpacing: "0.06em",
-              marginBottom: 12,
+              textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12,
             }}>Summary</div>
 
             {items.map((it, i) => (
@@ -745,10 +779,7 @@ function CheckoutReceipt({ progress, mobile }) {
                 padding: "8px 0", fontSize: 14,
               }}>
                 <span style={{ color: "var(--text-secondary)" }}>{it.label}</span>
-                <span style={{
-                  fontWeight: 500, fontFamily: "var(--font-display)",
-                  letterSpacing: "-0.01em",
-                }}>${it.price}</span>
+                <span style={{ fontWeight: 500, fontFamily: "var(--font-display)" }}>${it.price}</span>
               </div>
             ))}
 
@@ -760,17 +791,14 @@ function CheckoutReceipt({ progress, mobile }) {
               <span style={{ fontWeight: 600, fontSize: 14 }}>Total</span>
               <span style={{
                 fontFamily: "var(--font-display)", fontSize: 28,
-                fontWeight: 300, color: "var(--purple)",
-                letterSpacing: "-0.02em",
+                fontWeight: 300, color: "var(--purple)", letterSpacing: "-0.02em",
               }}>${total.toLocaleString()}</span>
             </div>
 
             <button style={{
               width: "100%", marginTop: 20, padding: "14px 24px",
               borderRadius: "var(--r-sm)", background: "var(--purple)",
-              border: "none", color: "#fff", fontSize: 14, fontWeight: 600,
-              cursor: "pointer", letterSpacing: "0.01em",
-              boxShadow: "0 2px 16px rgba(167, 139, 250, 0.25)",
+              border: "none", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
             }}>Complete Registration →</button>
           </div>
         )}
@@ -783,52 +811,66 @@ function CheckoutReceipt({ progress, mobile }) {
 
 export default function App() {
   const mobile = useIsMobile();
-  const [splashDone, setSplashDone] = useState(false);
+  const [page, setPage] = useState("home");
   const [mode, setMode] = useState("builder");
   const [bp, setBp] = useState(0);
   const [cp, setCp] = useState(0);
   const [panel, setPanel] = useState("chat");
 
+  function openDemo(m) {
+    setMode(m);
+    setPanel("chat");
+    setBp(0);
+    setCp(0);
+    setPage("demo");
+  }
+
+  if (page === "home") {
+    return (
+      <>
+        <style>{STYLES}</style>
+        <Homepage onOpenDemo={openDemo} mobile={mobile} />
+      </>
+    );
+  }
+
   return (
     <>
       <style>{STYLES}</style>
-
-      {!splashDone && <Splash onDone={() => setSplashDone(true)} />}
-
       <div style={{
         width: "100vw", height: "100vh",
         display: "flex", flexDirection: "column",
-        background: "var(--bg-deep)",
+        background: "var(--bg)",
         fontFamily: "var(--font-body)", color: "var(--text-primary)",
         overflow: "hidden",
-        opacity: splashDone ? 1 : 0,
-        transition: "opacity 0.8s ease-out 0.1s",
+        animation: "fadeIn 0.4s ease-out",
       }}>
 
-        {/* ─── Top Bar ─── */}
+        {/* Nav */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: mobile ? "0 14px" : "0 24px",
           height: 50, flexShrink: 0,
           borderBottom: "1px solid var(--border)",
-          background: "var(--bg-surface)",
+          background: "var(--bg-card)",
         }}>
-          {/* Logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: mobile ? 50 : 120 }}>
+          {/* Back */}
+          <button
+            onClick={() => setPage("home")}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              background: "none", border: "none", cursor: "pointer",
+              minWidth: mobile ? 50 : 120,
+              padding: 0,
+            }}
+          >
+            <span style={{ fontSize: 14, color: "var(--text-muted)" }}>←</span>
             <span style={{
               fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500,
               background: "linear-gradient(135deg, var(--accent), var(--purple))",
               WebkitBackgroundClip: "text", color: "transparent",
-              letterSpacing: "-0.02em",
             }}>tkt</span>
-            {!mobile && (
-              <span style={{
-                fontSize: 10, color: "var(--text-muted)", fontWeight: 500,
-                padding: "3px 8px", borderRadius: 4,
-                border: "1px solid var(--border)", letterSpacing: "0.05em",
-              }}>DEMO</span>
-            )}
-          </div>
+          </button>
 
           {/* Mode Switcher */}
           <div style={{
@@ -845,51 +887,35 @@ export default function App() {
                 borderRadius: "var(--r-xs)",
                 border: "none", cursor: "pointer",
                 fontSize: 12.5, fontWeight: 500,
-                background: mode === tab.id ? "var(--bg-hover)" : "transparent",
+                background: mode === tab.id ? "var(--bg-card)" : "transparent",
                 color: mode === tab.id ? "var(--text-primary)" : "var(--text-muted)",
+                boxShadow: mode === tab.id ? "var(--shadow-sm)" : "none",
                 transition: "all 0.25s ease",
-                letterSpacing: "0.01em",
               }}>{tab.label}</button>
             ))}
           </div>
 
-          {/* Right side */}
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "flex-end",
-            minWidth: mobile ? 50 : 120,
-          }}>
-            {!mobile && (
-              <button style={{
-                padding: "6px 14px", borderRadius: 20,
-                background: "transparent",
-                border: "1px solid var(--border-light)",
-                color: "var(--text-secondary)",
-                fontSize: 12, fontWeight: 500,
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                letterSpacing: "0.01em",
-              }}>Request Access</button>
-            )}
+          {/* Right */}
+          <div style={{ minWidth: mobile ? 50 : 120, display: "flex", justifyContent: "flex-end" }}>
+            {!mobile && <RequestButton />}
           </div>
         </div>
 
-        {/* ─── Mobile Panel Toggle ─── */}
+        {/* Mobile Toggle */}
         {mobile && (
           <div style={{
             display: "flex", background: "var(--bg-elevated)",
-            borderBottom: "1px solid var(--border)",
-            padding: 6, flexShrink: 0,
+            borderBottom: "1px solid var(--border)", padding: 6, flexShrink: 0,
           }}>
             {[
               { id: "preview", label: mode === "builder" ? "Preview" : "Receipt" },
               { id: "chat", label: "Chat" },
             ].map(tab => (
               <button key={tab.id} onClick={() => setPanel(tab.id)} style={{
-                flex: 1, padding: "8px 0",
-                borderRadius: "var(--r-xs)",
+                flex: 1, padding: "8px 0", borderRadius: "var(--r-xs)",
                 border: "none", cursor: "pointer",
                 fontSize: 13, fontWeight: 500,
-                background: panel === tab.id ? "var(--bg-hover)" : "transparent",
+                background: panel === tab.id ? "var(--bg-card)" : "transparent",
                 color: panel === tab.id ? "var(--text-primary)" : "var(--text-muted)",
                 transition: "all 0.2s ease",
               }}>{tab.label}</button>
@@ -897,7 +923,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ─── Main Content ─── */}
+        {/* Main */}
         <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
           {mobile ? (
             panel === "preview" ? (
@@ -911,24 +937,15 @@ export default function App() {
             )
           ) : (
             <>
-              <BrowserFrame
-                url={mode === "builder" ? "kaleidoscope.tkt.events" : "checkout.tkt.events/register"}
-                mobile={false}
-              >
+              <BrowserFrame url={mode === "builder" ? "kaleidoscope.tkt.events" : "checkout.tkt.events/register"}>
                 {mode === "builder"
                   ? <BuilderPreview progress={bp} mobile={false} />
-                  : <CheckoutReceipt progress={cp} mobile={false} />
-                }
+                  : <CheckoutReceipt progress={cp} mobile={false} />}
               </BrowserFrame>
-
-              <div style={{
-                width: 390, flexShrink: 0,
-                borderLeft: "1px solid var(--border)",
-              }}>
+              <div style={{ width: 390, flexShrink: 0, borderLeft: "1px solid var(--border)" }}>
                 {mode === "builder"
                   ? <Chat convo={builderConvo} onProgress={setBp} title="Event Builder" sub="Describe your vision" accent="var(--accent)" />
-                  : <Chat convo={checkoutConvo} onProgress={setCp} title="Registration" sub="Kaleidoscope 2026" accent="var(--purple)" />
-                }
+                  : <Chat convo={checkoutConvo} onProgress={setCp} title="Registration" sub="Kaleidoscope 2026" accent="var(--purple)" />}
               </div>
             </>
           )}
