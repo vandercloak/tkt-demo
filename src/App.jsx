@@ -102,12 +102,14 @@ const checkoutConvo = [
 
 function Splash({ onDone }) {
   const [fading, setFading] = useState(false);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
     const t1 = setTimeout(() => setFading(true), 2000);
-    const t2 = setTimeout(onDone, 2700);
+    const t2 = setTimeout(() => onDoneRef.current(), 2700);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [onDone]);
+  }, []);
 
   return (
     <div style={{
